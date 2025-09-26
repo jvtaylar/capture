@@ -1,16 +1,40 @@
-# test_yolo_safe.py
+import streamlit as st
+import numpy as np
 from ultralytics import YOLO
-from PIL import Image
+from PIL import Image, ImageDraw
 
-# Load pretrained YOLOv8 nano model
-model = YOLO("yolov8n.pt")
+st.title("👤 Person Detection with YOLOv8 (no OpenCV)")
 
-# Run detection on a sample image (bus with people)
-results = model("https://ultralytics.com/images/bus.jpg")
+# Cache model so it doesn't reload every time
+@st.cache_resource
+def load_model():
+    return YOLO("yolov8n.pt")  # Nano model (fast & small)
 
-# Save first result with bounding boxes
-results[0].save("result.jpg")
+model = load_model()
 
-# Load with PIL just to verify we got an image
-img = Image.open("runs/detect/predict/result.jpg")
-print("✅ YOLO detection ran successfully. Output image saved at:", img.filename)
+uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+if uploaded_file:
+    # Open image
+    img = Image.open(uploaded_file).convert("RGB")
+
+    # Run YOLOv8 prediction
+    results = model.predict(np.array(img))
+
+    # Draw bounding boxes with PIL
+    draw = ImageDraw.Draw(img)
+    person_count = 0
+
+    for r in results:
+        for box in r.boxes:
+            cls_id = int(box.cls[0])
+            label = model.names[cls_id]
+            if label == "person":  # Only count persons
+                person_count += 1
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                draw.rectangle([x1, y1, x2, y2], outline="green", width=3)
+                draw.text((x1, y1 - 10), label, fill="green")
+
+    # Show output
+    st.image(img, caption=f"Persons detected: {person_count}")
+    st.success(f"✅ Number of persons detected: {person_count}")
