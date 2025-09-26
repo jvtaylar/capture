@@ -1,4 +1,5 @@
 # person_detection_yolo_pil.py
+import cv2
 import streamlit as st
 import numpy as np
 from ultralytics import YOLO
