@@ -5,6 +5,7 @@ import numpy as np
 from ultralytics import YOLO
 from PIL import Image, ImageDraw
 
+
 st.title("Person Detection using Machine Learning (YOLOv8 + PIL)")
 
 # Load pretrained YOLOv8 model (nano version for speed)
